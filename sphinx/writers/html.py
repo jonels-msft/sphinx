@@ -361,9 +361,17 @@ class HTMLTranslator(SphinxTranslator, BaseTranslator):
 
     # overwritten
     def visit_bullet_list(self, node: Element) -> None:
-        if len(node) == 1 and isinstance(node[0], addnodes.toctree):
-            # avoid emitting empty <ul></ul>
-            raise nodes.SkipNode
+        if isinstance(node[0], addnodes.toctree):
+            if len(node) == 1:
+                # avoid emitting empty <ul></ul>
+                raise nodes.SkipNode
+
+            # associate <ul> with preceding caption
+            my_idx = parent.index(node)
+            if my_idx > 0
+                prev_node = parent[my_idx-1]
+                if prev_node.tagname == "p" and prev_node['ids']:
+                    node['aria-labeledby'] = prev_node['ids'][0]
         self.generate_targets_for_listing(node)
         super().visit_bullet_list(node)
 
@@ -415,7 +423,10 @@ class HTMLTranslator(SphinxTranslator, BaseTranslator):
     # overwritten
     def visit_title(self, node: Element) -> None:
         if isinstance(node.parent, addnodes.compact_paragraph) and node.parent.get('toctree'):
-            self.body.append(self.starttag(node, 'p', '', CLASS='caption'))
+            self.body.append(
+                self.starttag(
+                    node, 'p', '', CLASS='caption',
+                    ID="toc-caption-%s" % node['docname']))
             self.body.append('<span class="caption-text">')
             self.context.append('</span></p>\n')
         else:
